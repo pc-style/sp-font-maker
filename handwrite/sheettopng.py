@@ -8,8 +8,69 @@ from packaging.version import Version
 from PIL import Image, ImageDraw
 
 
+def _get_layout(default_json_data, cli_args, cli_rows=None, cli_cols=None):
+    sheet_version = cli_args.get("sheet_version") or "99999999.999999.999999"
+    layout_name = cli_args.get("sheet_layout") or "standard"
+    layouts = default_json_data.get("sheet_layouts", {})
+    layout = layouts.get(layout_name, {}) if isinstance(layouts, dict) else {}
+
+    rows = cli_rows or layout.get("rows") or 9
+    cols = cli_cols or layout.get("cols") or 20
+
+    geometry = {
+        "grid_row_w": layout.get("grid_row_w"),
+        "grid_row_h": layout.get("grid_row_h"),
+        "grid_hor_padding": layout.get("grid_hor_padding"),
+        "grid_ver_padding": layout.get("grid_ver_padding"),
+        "grid_scan_w": layout.get("grid_scan_w"),
+        "grid_scan_h": layout.get("grid_scan_h"),
+        "grid_glyph_w": layout.get("grid_glyph_w"),
+        "grid_scan_hor_padding": layout.get("grid_scan_hor_padding"),
+        "glyph_set": layout.get("glyph_set") or "sheet",
+        "row_area_tolerance": layout.get("row_area_tolerance", 0.25),
+        "min_row_aspect_ratio": layout.get("min_row_aspect_ratio", 4),
+    }
+
+    # Backwards compatibility for legacy sheet versions.
+    if geometry["grid_row_w"] is None or geometry["grid_row_h"] is None:
+        if Version(sheet_version) < Version("3"):
+            geometry.update(
+                {
+                    "grid_row_w": 164,
+                    "grid_row_h": 12,
+                    "grid_hor_padding": 2,
+                    "grid_ver_padding": 1,
+                    "grid_scan_w": 8,
+                    "grid_scan_h": 10,
+                    "grid_glyph_w": 7,
+                    "grid_scan_hor_padding": 0.5,
+                }
+            )
+        else:
+            geometry.update(
+                {
+                    "grid_row_w": 126,
+                    "grid_row_h": 12,
+                    "grid_hor_padding": 3,
+                    "grid_ver_padding": 2,
+                    "grid_scan_w": 6,
+                    "grid_scan_h": 8,
+                    "grid_glyph_w": 4,
+                    "grid_scan_hor_padding": 1,
+                }
+            )
+
+    return layout_name, layout, rows, cols, geometry
+
+
 def sheet_to_png(
-    sheet, debug_dir, default_json, cli_args, other_words_string, cols=20, rows=9
+    sheet,
+    debug_dir,
+    default_json,
+    cli_args,
+    other_words_string,
+    cols=None,
+    rows=None,
 ):
     """Convert a sheet of sample writing input to a custom directory structure of PNGs.
 
@@ -50,7 +111,13 @@ def sheet_to_png(
 
 
 def detect_characters(
-    debug_dir, default_json, sheet_image, cli_args, other_words_string, cols=20, rows=9
+    debug_dir,
+    default_json,
+    sheet_image,
+    cli_args,
+    other_words_string,
+    cols=None,
+    rows=None,
 ):
     """Detect contours on the input image and filter them to get only characters.
 
@@ -75,6 +142,13 @@ def detect_characters(
         sorted_characters[x][y] denotes contour at x, y position in the input grid.
     """
     # TODO Raise errors and suggest where the problem might be
+
+    with open(default_json) as f:
+        default_json_data = json.load(f)
+
+    layout_name, layout, rows, cols, geometry = _get_layout(
+        default_json_data, cli_args, cli_rows=rows, cli_cols=cols
+    )
 
     # Read the image and convert to grayscale
     image = cv2.imread(sheet_image)
@@ -127,9 +201,8 @@ def detect_characters(
         if len(contours) > maybe_row:
             contour_pil = [tuple(point[0]) for point in contours[maybe_row]]
             if len(contour_pil) > 1:
-                # print(maybe_row)
                 debug_draw.polygon(contour_pil, outline="blue", width=debug_width)
-    # debug_image.save(os.path.join(debug_dir, "analysis PREVIEW" + ".png"))  # 18 biggest contours
+    # debug_image.save(os.path.join(debug_dir, "analysis PREVIEW" + ".png"))  # biggest contours
 
     # Filter contours based on number of sides and then reverse sort by area.
     contours = sorted(
@@ -143,6 +216,19 @@ def detect_characters(
         key=cv2.contourArea,
         reverse=True,
     )
+
+    # Filter out very square or narrow candidates so tall/long glyphs don't break row detection
+    # while still tolerating the thinner math template rows.
+    filtered_contours = []
+    for cnt in contours:
+        left, top, width, height = cv2.boundingRect(cnt)
+        if height == 0:
+            continue
+        aspect_ratio = width / height
+        if aspect_ratio < geometry.get("min_row_aspect_ratio", 4):
+            continue
+        filtered_contours.append(cnt)
+    contours = filtered_contours
     # for row in range(rows):
     #     print(contours[row])
 
@@ -172,11 +258,11 @@ def detect_characters(
         debug_draw.polygon(contour_pil, outline="red", width=debug_width)
     # debug_image.save(os.path.join(debug_dir, "analysis PREVIEW" + ".png"))  # rectangular contours
 
-    # output the biggest 9 rows as images, for debug purposes
+    # output the biggest rows as images, for debug purposes
     row_images = []
     row_areas = []
-    for row in range(rows):
-        # print(row)
+    max_rows = min(rows, len(contours))
+    for row in range(max_rows):
         left, top, width, height = cv2.boundingRect(contours[row])
         # left_s, top_s, width_s, height_s = small_rect(contours[row])
         row_areas.append(width * height)
@@ -195,17 +281,21 @@ def detect_characters(
         # debug_draw.rectangle([left_s, top_s, left_s+width_s, top_s+height_s], outline="blue")
         # debug_image.save(os.path.join(debug_dir, "analysis PREVIEW" + ".png"))  # row rectangles
 
-    average_row_area = 0
-    for row in range(rows):
-        average_row_area += row_areas[row]
-    average_row_area /= rows
+    if max_rows == 0:
+        raise RuntimeError("No row contours detected; check the sheet image and layout settings.")
 
-    too_small_row = average_row_area * 0.75
-    too_big_row = average_row_area * 1.125
-    for row in range(rows):
+    average_row_area = 0
+    for row in range(max_rows):
+        average_row_area += row_areas[row]
+    average_row_area /= max_rows
+
+    tolerance = geometry.get("row_area_tolerance", 0.25)
+    too_small_row = average_row_area * (1 - tolerance)
+    too_big_row = average_row_area * (1 + tolerance)
+    for row in range(max_rows):
         if not (too_small_row < row_areas[row] < too_big_row):
             print(
-                f"⚠️ Row[{row}] is {row_areas[row] / average_row_area:.2g}x the average row area! "
+                f"⚠️ Row[{row}] is {row_areas[row] / average_row_area:.2g}x the average row area for layout '{layout_name}'! "
                 + "Check the analysis PNGs.\n"
                 + "   This usually happens if someone's custom nimi label gets too close to a big black rectangle, preventing it from being recognized as a rectangle."
             )
@@ -216,22 +306,48 @@ def detect_characters(
     row_dir = os.path.join(debug_dir)
     if not os.path.exists(row_dir):
         os.mkdir(row_dir)
-    for row in range(rows):
+    for row in range(max_rows):
         cv2.imwrite(
             os.path.join(row_dir, "analysis step 5 - row" + str(row + 1) + ".png"),
             row_images[row][0],
         )
 
-    # sort the biggest 9 rows, top-to-bottom
-    contours[0:9] = sorted(contours[0:9], key=lambda cnt: cv2.boundingRect(cnt)[1])
+    if max_rows < rows:
+        print(
+            f"⚠️ Layout '{layout_name}' expects {rows} rows but only {max_rows} were detected; continuing with detected rows."
+        )
+    rows = max_rows
+
+    # sort the biggest rows, top-to-bottom
+    contours[0:rows] = sorted(contours[0:rows], key=lambda cnt: cv2.boundingRect(cnt)[1])
 
     # Since amongst all the contours, the expected case is that the 4 sided contours
     # containing the characters should have the maximum area, so we loop through the first
     # rows*colums contours and add them to final list after cropping.
     characters = []
-    with open(default_json) as f:
-        default_json_data = json.load(f)
-    sheet_glyphs = default_json_data.get("glyphs", {}).get("sheet", {})
+    sheet_glyphs = default_json_data.get("glyphs", {}).get(
+        geometry.get("glyph_set", "sheet"), {}
+    )
+    if not sheet_glyphs:
+        sheet_glyphs = default_json_data.get("glyphs", {}).get("sheet", {})
+
+    expected_cells = rows * cols
+    if len(sheet_glyphs) and expected_cells != len(sheet_glyphs):
+        print(
+            "⚠️ Layout '{layout}' expects {cells} cells for glyph set '{glyph_set}', but the config provides {glyphs} glyphs."
+            .format(
+                layout=layout_name,
+                cells=expected_cells,
+                glyph_set=geometry.get("glyph_set", "sheet"),
+                glyphs=len(sheet_glyphs),
+            )
+        )
+
+    override_lookup = {}
+    for override in layout.get("cell_overrides", []) if layout else []:
+        name = override.get("name")
+        if name:
+            override_lookup[name] = override
     for row in range(rows):
         # Calculate the bounding of the contour and approximate the height
         # and width for final cropping.
@@ -239,37 +355,14 @@ def detect_characters(
         # print(row_x, row_y, row_w, row_h)
         # row_x, row_y, row_w, row_h = small_rect(contours[row]) # doesn't help
 
-        sheet_version = cli_args.get("sheet_version") or "99999999.999999.999999"
-        if Version(sheet_version) < Version("3"):
-            # SHEET VERSION 2:
-            # The grid unit here is roughly 0.125cm on the printed page, or 0.25cm in the original huge file.
-            # Each row bounding box (black line) is 164*12,
-            grid_row_w = 164
-            grid_row_h = 12
-            # with 2 hor padding and 1 ver padding on each side.
-            grid_hor_padding = 2
-            grid_ver_padding = 1
-            # There are 20 glyphs per row. Each glyph scan area is 8x10.
-            grid_scan_w = 8
-            grid_scan_h = 10
-            # The visible gray squares are 7x7, to help with human and scanning errors.
-            grid_glyph_w = 7
-            grid_scan_hor_padding = 0.5
-        else:
-            # SHEET VERSIONS 3, 4:
-            # The grid unit here is roughly 1/6cm on the printed page, or 1/3cm in the original huge file.
-            # Each row bounding box (black line) is 126x12,
-            grid_row_w = 126
-            grid_row_h = 12
-            # with 3 hor padding and 2 ver padding on each side.
-            grid_hor_padding = 3
-            grid_ver_padding = 2
-            # There are 20 glyphs per row. Each glyph scan area is 6x8.
-            grid_scan_w = 6
-            grid_scan_h = 8
-            # The visible gray squares are 4x4, to help with human and scanning errors.
-            grid_glyph_w = 4
-            grid_scan_hor_padding = 1
+        grid_row_w = geometry["grid_row_w"]
+        grid_row_h = geometry["grid_row_h"]
+        grid_hor_padding = geometry["grid_hor_padding"]
+        grid_ver_padding = geometry["grid_ver_padding"]
+        grid_scan_w = geometry["grid_scan_w"]
+        grid_scan_h = geometry["grid_scan_h"]
+        grid_glyph_w = geometry["grid_glyph_w"]
+        grid_scan_hor_padding = geometry["grid_scan_hor_padding"]
 
         # fmt:off
         # Convert glyph and padding from grid cells into pixels,
@@ -350,6 +443,28 @@ def detect_characters(
                     int(glyph_top) : int(glyph_top + glyph_h),
                     int(glyph_left) : int(glyph_left + glyph_w),
                 ]
+            override = None
+            glyph_name = current_glyph.get("name") if current_glyph else None
+            if glyph_name and glyph_name in override_lookup:
+                override = override_lookup[glyph_name]
+
+            if override:
+                glyph_w *= override.get("width_multiplier", 1)
+                glyph_h *= override.get("height_multiplier", 1)
+                glyph_left += override.get("left_shift", 0)
+                glyph_top += override.get("top_shift", 0)
+
+            # clamp bounds to the image to avoid cropping issues on tall/wide cells
+            glyph_left = max(0, glyph_left)
+            glyph_top = max(0, glyph_top)
+            glyph_w = min(glyph_w, image.shape[1] - glyph_left)
+            glyph_h = min(glyph_h, image.shape[0] - glyph_top)
+
+            roi = image[
+                int(glyph_top) : int(glyph_top + glyph_h),
+                int(glyph_left) : int(glyph_left + glyph_w),
+            ]
+
             characters.append([roi, glyph_left, glyph_top, glyph_w, glyph_h])
             debug_draw.rectangle(
                 [
@@ -468,34 +583,37 @@ def save_images(characters, debug_dir, default_json, cli_args):
     """
     os.makedirs(debug_dir, exist_ok=True)
 
+    with open(default_json) as f:
+        default_json_data = json.load(f)
+
+    _, _, _, _, geometry = _get_layout(default_json_data, cli_args)
+
     # Create directory for each character and save the png for the characters
     # Structure (single sheet): UserProvidedDir/ord(character)/ord(character).png
     # Structure (multiple sheets): UserProvidedDir/sheet_filename/ord(character)/ord(character).png
     # Kelly note: the script does not support multiple sheets, actually
 
     # Kelly note: `characters` is more like `cells`, since not every cell contains a glyph
+    glyph_set = geometry.get("glyph_set", "sheet")
+    default_glyphs = default_json_data.get("glyphs", {}).get(glyph_set, {})
+    generated_glyphs = default_json_data.get("glyphs", {}).get("generated-glyphs", {})
+    ligature_base_glyphs = default_json_data.get("glyphs", {}).get(
+        "ligature-base-glyphs", {}
+    )
+    glyphList = default_glyphs + generated_glyphs + ligature_base_glyphs
+
     for cellNum, images in enumerate(characters):
-        with open(default_json) as f:
-            default_json_data = json.load(f)
-            default_glyphs = default_json_data.get("glyphs", {}).get("sheet", {})
-            generated_glyphs = default_json_data.get("glyphs", {}).get(
-                "generated-glyphs", {}
-            )
-            ligature_base_glyphs = default_json_data.get("glyphs", {}).get(
-                "ligature-base-glyphs", {}
-            )
-            glyphList = default_glyphs + generated_glyphs + ligature_base_glyphs
+        if len(glyphList) > cellNum:  # should this be `>=`?
             curMetadatum = glyphList[cellNum]
-            if len(glyphList) > cellNum:  # should this be `>=`?
-                if "name" in curMetadatum:
-                    character = os.path.join(debug_dir, curMetadatum["name"])
-                    if not os.path.exists(character):
-                        os.mkdir(character)
-                    # print(character, curMetadatum['name'] + ".png")
-                    cv2.imwrite(
-                        os.path.join(character, curMetadatum["name"] + ".png"),
-                        images[0],
-                    )
+            if "name" in curMetadatum:
+                character = os.path.join(debug_dir, curMetadatum["name"])
+                if not os.path.exists(character):
+                    os.mkdir(character)
+                # print(character, curMetadatum['name'] + ".png")
+                cv2.imwrite(
+                    os.path.join(character, curMetadatum["name"] + ".png"),
+                    images[0],
+                )
 
     # Read pixel size and write it to default.json, so svgtottf_ffpython can use it.
     # If this brittle codeblock breaks, just comment it out, and svgtottf_ffpython will size the pixel scan for an 8px font.

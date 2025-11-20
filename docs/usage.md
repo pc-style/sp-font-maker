@@ -44,4 +44,9 @@ Your form should look like this:
 
 ## Configuring
 
-TO DO
+The CLI exposes sheet-layout controls so the slicing logic can follow newer templates (such as the math layout with long arrows and tall integrals):
+
+- Use `--sheet-layout math` to pick the math grid settings from `handwrite/default.toml` (12 rows × 15 columns).
+- Override counts directly with `--sheet-rows` and `--sheet-cols` if you have a custom grid.
+
+The `sheet_layouts` tables inside `handwrite/default.toml` list the current geometry for the standard and math templates; adjust those values if you create another template variant.

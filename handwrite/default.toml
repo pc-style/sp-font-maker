@@ -1,5 +1,39 @@
 # Glyph configuration for basic Latin, Greek, digits, and math operators
 
+[sheet_layouts]
+
+[sheet_layouts.standard]
+rows = 9
+cols = 20
+grid_row_w = 126
+grid_row_h = 12
+grid_hor_padding = 3
+grid_ver_padding = 2
+grid_scan_w = 6
+grid_scan_h = 8
+grid_glyph_w = 4
+grid_scan_hor_padding = 1
+glyph_set = "sheet"
+row_area_tolerance = 0.35
+min_row_aspect_ratio = 6
+
+[sheet_layouts.math]
+# Larger cells for tall integrals and long arrows; still scans 180 slots by default.
+rows = 12
+cols = 15
+grid_row_w = 150
+grid_row_h = 14
+grid_hor_padding = 4
+grid_ver_padding = 2
+grid_scan_w = 8
+grid_scan_h = 10
+grid_glyph_w = 6
+grid_scan_hor_padding = 1.5
+glyph_set = "sheet"
+row_area_tolerance = 0.4
+min_row_aspect_ratio = 5
+
+
 [glyphs]
 
 sheet = [
