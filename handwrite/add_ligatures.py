@@ -26,7 +26,7 @@ def add_ligatures(
     with open(default_json) as f:
         default_json_data = json.load(f)
 
-    filename = cli_args_dict.get("filename", "Untitled")
+    filename = cli_args_dict.get("filename", "MathHandwriting")
     if filename is None:
         raise NameError("filename not found in config file.")
 
@@ -54,21 +54,21 @@ languagesystem latn dflt; # people can edit the font in fontforge after??
 
 
 
+
 # LIGATURES
 
 feature liga {
 """
+
     list_of_ligs = []
-    # cartouchable and stackable glyphs with ligatures
-    cartoucheable_and_stackable = []
 
     # create ligature lines
     with open(default_json) as f:
         glyphs = json.load(f).get("glyphs", {}).get("sheet", {})
-        for k in glyphs:
-            if "ligature" in k:
-                lig = k["ligature"]
-                name = k["name"]
+        for glyph in glyphs:
+            if "ligature" in glyph:
+                lig = glyph["ligature"]
+                name = glyph["name"]
 
                 # create tuples of ligature text, followed by ligature length by tokens
                 list_of_ligs.append(
@@ -78,85 +78,7 @@ feature liga {
                     )
                 )
 
-                if "rotate" in k and k["rotate"]:
-
-                    def rotated_ligature(
-                        lig, lig_suffix, name, name_suffix, extra_length
-                    ):
-                        list_of_ligs.append(
-                            (
-                                f"  sub   {(lig + lig_suffix).rjust(22)}   by   {(name + name_suffix).rjust(13)};",
-                                len(lig.split(" ")) + extra_length,
-                            )
-                        )
-
-                    rotated_ligature(lig, " v east", name, ".SE", 2)
-                    rotated_ligature(lig, " east v", name, ".SE", 2)
-                    rotated_ligature(lig, " north east", name, ".NE", 2)
-                    rotated_ligature(lig, " east north", name, ".NE", 2)
-                    rotated_ligature(lig, " north west", name, ".NW", 2)
-                    rotated_ligature(lig, " west north", name, ".NW", 2)
-                    rotated_ligature(lig, " v west", name, ".SW", 2)
-                    rotated_ligature(lig, " west v", name, ".SW", 2)
-                    direction = k.get("direction", "right")
-                    if direction == "up":
-                        rotated_ligature(lig, " v", name, ".S", 1)
-                        rotated_ligature(lig, " east", name, ".E", 1)
-                        rotated_ligature(lig, " north", name, "", 1)  # default dir
-                        rotated_ligature(lig, " west", name, ".W", 1)
-                    elif direction == "down":
-                        rotated_ligature(lig, " v", name, "", 1)  # default dir
-                        rotated_ligature(lig, " east", name, ".E", 1)
-                        rotated_ligature(lig, " north", name, ".N", 1)
-                        rotated_ligature(lig, " west", name, ".W", 1)
-                    elif direction == "left":
-                        rotated_ligature(lig, " v", name, ".S", 1)
-                        rotated_ligature(lig, " east", name, ".E", 1)
-                        rotated_ligature(lig, " north", name, ".N", 1)
-                        rotated_ligature(lig, " west", name, "", 1)  # default dir
-                    else:  # right
-                        rotated_ligature(lig, " v", name, ".S", 1)
-                        rotated_ligature(lig, " east", name, "", 1)  # default dir
-                        rotated_ligature(lig, " north", name, ".N", 1)
-                        rotated_ligature(lig, " west", name, ".W", 1)
-                    pass
-
-                if (
-                    k["name"] != "cartoucheStartTok"
-                    and k["name"] != "cartoucheEndTok"
-                    # and k['name'] != "middotTok"
-                    # and k['name'] != "colonTok"
-                    # and k['name'] != "teTok"
-                    # and k['name'] != "toTok"
-                ):
-                    cartoucheable_and_stackable.append(k["name"])
-
-                if "rotate" in k and k["rotate"]:
-                    direction = k.get("direction", "right")
-                    if direction == "up":
-                        cartoucheable_and_stackable.append(k["name"] + ".S")
-                        cartoucheable_and_stackable.append(k["name"] + ".E")
-                        cartoucheable_and_stackable.append(k["name"] + ".W")
-                    elif direction == "down":
-                        cartoucheable_and_stackable.append(k["name"] + ".E")
-                        cartoucheable_and_stackable.append(k["name"] + ".N")
-                        cartoucheable_and_stackable.append(k["name"] + ".W")
-                    elif direction == "left":
-                        cartoucheable_and_stackable.append(k["name"] + ".S")
-                        cartoucheable_and_stackable.append(k["name"] + ".E")
-                        cartoucheable_and_stackable.append(k["name"] + ".N")
-                    else:  # right
-                        cartoucheable_and_stackable.append(k["name"] + ".S")
-                        cartoucheable_and_stackable.append(k["name"] + ".N")
-                        cartoucheable_and_stackable.append(k["name"] + ".W")
-                    cartoucheable_and_stackable.append(k["name"] + ".SE")
-                    cartoucheable_and_stackable.append(k["name"] + ".NE")
-                    cartoucheable_and_stackable.append(k["name"] + ".NW")
-                    cartoucheable_and_stackable.append(k["name"] + ".SW")
-
-    # linuwi, kepen, ali, ni-numbers, space space, hyphen
-    # todo: allow these to be overridden by custom-words. that would help kilitelen linuwi, and any font's ni2
-    aliases = default_json_data.get("glyphs", {}).get("ligature-aliases")
+    aliases = default_json_data.get("glyphs", {}).get("ligature-aliases") or []
     for alias in aliases:
         list_of_ligs.append(
             (
@@ -172,196 +94,7 @@ feature liga {
     for line in list_of_ligs:
         ligatures_string += line[0] + "\n"
 
-    ligatures_string += """} liga;
-
-
-
-
-
-
-
-
-
-"""
-
-    ligatures_string += """# STACKING
-
-# let's say we have the input string `kala stackJoin lili`, and we want to turn it into `kala.bottom lili.top`
-
-# 0. start:                            kala stackJoin    lili
-# 1. we join the bottom:        kala.bottom              lili
-# 2. we duplicate the joiner:   kala.bottom    stackJoin lili
-# 3. we join the top:           kala.bottom              lili.top
-
-
-
-lookup step1_joinBottom {"""
-    # sub   kalaTok stackJoinTok   by   kalaTok.bottom;
-    for word in cartoucheable_and_stackable:
-        ligatures_string += (
-            f"\n  sub {word.rjust(12)} stackJoinTok   by {word.rjust(12)}.bottom;"
-        )
-    ligatures_string += """
-} step1_joinBottom;
-
-
-
-lookup step2_duplicateJoiner {"""
-    # sub   kalaTok.bottom   by   kalaTok.bottom stackJoinTok;
-    for word in cartoucheable_and_stackable:
-        ligatures_string += f"\n  sub {word.rjust(12)}.bottom   by {word.rjust(12)}.bottom stackJoinTok;"
-    ligatures_string += """
-} step2_duplicateJoiner;
-
-
-
-lookup step3_joinTop {"""
-    # sub   stackJoinTok liliTok   by   liliTok.top;
-    for word in cartoucheable_and_stackable:
-        ligatures_string += (
-            f"\n  sub   stackJoinTok {word.rjust(12)}   by {word.rjust(12)}.top;"
-        )
-    ligatures_string += """
-} step3_joinTop ;
-
-
-
-feature liga {                    #          kala stackJoin    lili
-  lookup step1_joinBottom;        #   kala.bottom              lili
-  lookup step2_duplicateJoiner;   #   kala.bottom    stackJoin lili
-  lookup step3_joinTop;           #   kala.bottom              lili.top
-} liga;
-
-
-
-
-
-
-
-
-
-"""
-
-    ligatures_string += """# CARTOUCHES
-
-@cartoucheableGlyph = [
-"""
-    for word in cartoucheable_and_stackable:
-        ligatures_string += "  " + word.rjust(12) + "\n"
-    for word in cartoucheable_and_stackable:
-        ligatures_string += "  " + word.rjust(12) + ".bottom\n"
-    for word in cartoucheable_and_stackable:
-        ligatures_string += "  " + word.rjust(12) + ".top\n"
-
-    cartoucheable_non_words = [
-        "a",
-        "e",
-        "n",
-        "o",
-        "A",
-        "E",
-        "N",
-        "O",
-        "b",
-        "B",
-        "c",
-        "C",
-        "d",
-        "D",
-        "f",
-        "F",
-        "g",
-        "G",
-        "h",
-        "H",
-        "q",
-        "Q",
-        "r",
-        "R",
-        "v",
-        "V",
-        "x",
-        "X",
-        "y",
-        "Y",
-        "z",
-        "Z",
-        "period",
-        "colon",
-        "space",
-        "exclamation",
-        "question",
-        "underscore",
-        "ideographicspace",
-        "pipe",
-        "middotTok",
-        "colonTok",
-        "teTok",
-        "toTok",
-    ]
-    for non_word in cartoucheable_non_words:
-        ligatures_string += "  " + non_word.rjust(12) + "\n"
-
-    ligatures_string += """];
-
-"""
-
-    # ligatures_string += """@stackableBottom = [\n"""
-    # for word in cartoucheable_and_stackable:
-    #     ligatures_string += "  " + word.rjust(12) + ".bottom\n"
-    # ligatures_string += """];\n\n"""
-
-    # ligatures_string += """@stackableTop = [\n"""
-    # for word in cartoucheable_and_stackable:
-    #     ligatures_string += "  " + word.rjust(12) + ".top\n"
-    # ligatures_string += """];\n\n\n\n"""
-
-    ligatures_string += """lookup add_cartouche_middle {
-  # Add a cartouche middle after the glyph.
-  # (The cartouche middle is zero-width and extends to the left,
-  #  surrounding the glyph.)
-"""
-    for word in cartoucheable_and_stackable:
-        ligatures_string += (
-            f"  sub {word.rjust(12)}   by {word.rjust(12)} cartoucheMiddleTok;\n"
-        )
-    for word in cartoucheable_and_stackable:
-        ligatures_string += f"  sub {word.rjust(12)}.bottom   by {word.rjust(12)}.bottom cartoucheMiddleTok;\n"
-    for word in cartoucheable_and_stackable:
-        ligatures_string += f"  sub {word.rjust(12)}.top   by {word.rjust(12)}.top cartoucheMiddleTok;\n"
-    for non_word in cartoucheable_non_words:
-        ligatures_string += f"  sub {non_word.rjust(12)}   by {non_word.rjust(12)} cartoucheMiddleTok;\n"
-
-    ligatures_string += """} add_cartouche_middle;
-
-
-
-# idk what keyword to use here. liga, calt, ccmp, something else?
-# this might affect whether the font works by default in text editors like LibreOffice and Word...?
-feature calt {
-  # If a glyph follows a cartouche start, add a cartouche middle after the glyph.
-  sub   cartoucheStartTok  [@cartoucheableGlyph]'   lookup add_cartouche_middle;
-
-  # If a glyph follows a cartouche middle, add a cartouche middle after the glyph.
-  sub   cartoucheMiddleTok [@cartoucheableGlyph]'   lookup add_cartouche_middle;
-  # # (Bug: The following line doesn't do anything? So instead, we draw the cartouche middle twice, making cartouche middles too thick.)
-  # sub   cartoucheMiddleTok space [@cartoucheableGlyph]'   lookup add_cartouche_middle;
-
-  # # Stacked glyphs
-  # # (Bug: The following lines don't do anything? So instead, we draw the cartouche middle twice, making cartouche middles too thick.)
-  # sub   cartoucheStartTok [@stackableBottom] [@stackableTop]'   lookup add_cartouche_middle;
-  # sub   cartoucheMiddleTok [@stackableBottom] [@stackableTop]'   lookup add_cartouche_middle;
-} calt;
-
-
-
-
-
-
-
-
-
-"""
+    ligatures_string += """} liga;"""
 
     # print(ligatures_string)
     feature_file = open(debug_dir + os.sep + family + ".fea", "w", encoding="utf-8")

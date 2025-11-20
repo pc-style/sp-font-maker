@@ -353,7 +353,7 @@ spaces = [
   {codepoint = 0x3e, width = 1000, name = "east"},   # >
   # (we treat "v" as a regular letter, instead of naming it "south")
 
-  # fallback for unsupported SP features
+  # fallback for unsupported legacy features
   {codepoint = 0x2b, width =    0, name = "plus"},        # +
   {codepoint = 0x26, width =    0, name = "ampersand"},   # &
   {codepoint = 0x7b, width =    0, name = "opencurly"},   # {
@@ -378,11 +378,11 @@ spaces = [
   # fallback for unsupported UCSUR features
   {codepoint = 0xf1996, width =    0, name = "nestJoinTok"},
   {codepoint = 0x200d,  width =    0, name = "zerowidthjoiner"},
-  {codepoint = 0xf1997, width =    0}, # SP START OF LONG GLYPH
-  {codepoint = 0xf1998, width =    0}, # SP END OF LONG GLYPH
-  {codepoint = 0xf1999, width =    0}, # SP COMBINING LONG GLYPH EXTENSION
-  {codepoint = 0xf199a, width =    0}, # SP START OF REVERSE LONG GLYPH
-  {codepoint = 0xf199b, width =    0}, # SP END OF REVERSE LONG GLYPH
+  {codepoint = 0xf1997, width =    0}, # legacy start of long glyph
+  {codepoint = 0xf1998, width =    0}, # legacy end of long glyph
+  {codepoint = 0xf1999, width =    0}, # legacy combining long glyph extension
+  {codepoint = 0xf199a, width =    0}, # legacy start of reverse long glyph
+  {codepoint = 0xf199b, width =    0}, # legacy end of reverse long glyph
 ]
 
 # UCSUR codepoints for words not included in the default sheet, since people may write them in.
@@ -437,7 +437,7 @@ other-ucsur-codepoints = [ # implemented!!
 "]" = "bracketright"
 "_" = "underscore"  # (works combining, but not standalone. not supported)
 
-# fallback for unsupported SP features
+# fallback for unsupported legacy features
 "+" = "plus"
 "&" = "ampersand"
 "{" = "opencurly"   # braceleft
