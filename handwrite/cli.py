@@ -182,6 +182,23 @@ def main():
         "--sheet-version", help="Sheet version (latest by default)", default=None
     )
     parser.add_argument(
+        "--sheet-layout",
+        help="Named sheet layout from the config (e.g. standard, math).",
+        default=None,
+    )
+    parser.add_argument(
+        "--sheet-rows",
+        type=int,
+        help="Override the number of rows in the scanned sheet (math template friendly).",
+        default=None,
+    )
+    parser.add_argument(
+        "--sheet-cols",
+        type=int,
+        help="Override the number of columns in the scanned sheet (math template friendly).",
+        default=None,
+    )
+    parser.add_argument(
         "--other-words",
         help="""List of other words in the custom cells. Use _ to ignore a cell.
 
