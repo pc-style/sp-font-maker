@@ -4,14 +4,14 @@ with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="handwrite",
-    version="0.3.1",
-    author="Yash Lamba, Saksham Arora, Aryan Gupta",
-    author_email="yashlamba2000@gmail.com, sakshamarora1001@gmail.com, aryangupta973@gmail.com",
-    description="Convert text to custom handwriting",
+    name="mathhandwriting",
+    version="1.0.0",
+    author="MathHandwriting Contributors",
+    author_email="",
+    description="Convert handwritten mathematical symbols to a custom font",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/builtree/handwrite",
+    url="https://github.com/pc-style/sp-font-maker",
     packages=setuptools.find_packages(),
     install_requires=["opencv-python", "Pillow>=11.1", "fonttools>=4.55.6", "packaging"],
     extras_require={

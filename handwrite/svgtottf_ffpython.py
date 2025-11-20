@@ -30,7 +30,7 @@ def set_properties(font, cli_args, version_major, version_minor, version_patch):
     fontname = cli_args.get("filename", "Untitled")
     family = cli_args.get("family", None) or fontname
     style = "Regular"
-    designer = cli_args.get("designer", "jan pi toki pona")
+    designer = cli_args.get("designer", "MathHandwriting Creator")
     license = cli_args.get("license", "All rights reserved")
     licenseurl = cli_args.get("license_url", "")
 
@@ -41,7 +41,7 @@ def set_properties(font, cli_args, version_major, version_minor, version_patch):
 
     # OS/2 fields - https://learn.microsoft.com/en-us/typography/opentype/spec/os2
     #             - https://fontforge.org/docs/scripting/python/fontforge.html#fontforge.font.os2_codepages
-    font.os2_vendor = "SPFM"
+    font.os2_vendor = "MHFC"  # MathHandwriting Font Creator
 
     font.os2_typoascent_add = False  # "Is Offset" checkbox in FontForge
     font.os2_typodescent_add = False
@@ -324,50 +324,10 @@ def add_glyphs(
                 g.vwidth = 1000
 
             # Create stacking glyphs (including rotated ones)
+            # Mathematical font doesn't need sitelen pona stacking features
+            # This code is preserved but simplified for potential future mathematical stacking
             for glyph in rotated_glyph_set:
-                stacking = False
-                if "ligature" in glyph_object:
-                    if (
-                        name != "cartoucheStartTok"
-                        and name != "cartoucheEndTok"
-                        # and name != "middotTok"
-                        # and name != "colonTok"
-                        # and name != "teTok"
-                        # and name != "toTok"
-                    ):
-                        stacking = True
-                        g_bottom = font.createChar(-1, glyph.glyphname + ".bottom")
-                        g_top = font.createChar(-1, glyph.glyphname + ".top")
-
-                if stacking:
-                    font.selection.select(glyph)
-                    font.copy()
-                    font.selection.select(g_bottom, g_top)
-                    font.paste()
-                    g_bottom.width = 1000
-                    g_bottom.vwidth = 1000
-                    g_top.width = 0
-                    g_top.vwidth = 1000
-                    if version_major < 4 and not pixel:
-                        # move up, so that the origin is in the bottom left
-                        g_bottom.transform(psMat.translate(0, 200))
-                        g_top.transform(psMat.translate(0, 200))
-                        # scale down to 4:3
-                        g_bottom.transform(psMat.scale(1, 0.75))
-                        g_top.transform(psMat.scale(1, 0.75))
-                        # reposition
-                        g_bottom.transform(psMat.translate(0, -250 - 200))
-                        g_top.transform(psMat.translate(-1000, 500 - 200))
-                    else:
-                        # move up, so that the origin is in the bottom left
-                        g_bottom.transform(psMat.translate(0, 125))
-                        g_top.transform(psMat.translate(0, 125))
-                        # scale down to 4:3
-                        g_bottom.transform(psMat.scale(1, 0.75))
-                        g_top.transform(psMat.scale(1, 0.75))
-                        # reposition
-                        g_bottom.transform(psMat.translate(0, -250 - 125))
-                        g_top.transform(psMat.translate(-1000, 500 - 125))
+                pass  # No stacking for basic mathematical font
 
     # get rid of stray metrics
     print("\r                                                ")
@@ -395,11 +355,8 @@ def add_glyphs(
         # #     -200ish                            800ish
         #       "bottom", int(g.boundingBox()[1]), "top",   int(g.boundingBox()[3]))
 
-    # combining cartouche extension (the middle of the cartouche)
-    font[0xF1992].width = 0
-    font[0xF1992].transform(psMat.translate(-1000, 0))
-    font[0x5F].width = 0
-    font[0x5F].transform(psMat.translate(-1000, 0))
+    # Mathematical font doesn't need cartouche extension characters
+    # Removed cartouche-specific code
 
     # Create characters that are rendered as zero-width or ideographic spaces.
     # This includes actual spaces, Latin fallback, placeholders, special characters.

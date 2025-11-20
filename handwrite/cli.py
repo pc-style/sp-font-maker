@@ -59,69 +59,8 @@ def converters(
         json.dump(font_data, file, indent=4)
     default_json = json_path
 
-    if other_words_string:
-        other_words = other_words_string.split()
-        print(other_words[0:4])
-        print(other_words[4:12])
-        print(other_words[12:25])
-        # fmt:off
-        blank_cells = [ # default.json indices of the blank cells on the page
-                                                         136, 137, 138, 139, # 4 cells
-                                     152, 153, 154, 155, 156, 157, 158, 159, # 8 cells
-            167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179  # 13 cells
-        ]
-        # fmt:on
-
-        special_character_names = font_data.get("glyphs", {}).get(
-            "special-characters-to-ligatures", {}
-        )
-        for position, word in enumerate(other_words):
-            if word != "_":
-                letters = list(word)
-                for letter_index, letter in enumerate(letters):
-                    if letter in special_character_names:
-                        letters[letter_index] = special_character_names[letter]
-
-                # todo: we don't differentiate letters from renamed special characters, we just concatenate them.
-                # so we end up with glyph names like "tokihyphenponaTok", which is nonstandard and hard to read.
-                #     standard is to use _ for concatenating characters, and . for variants
-                #     https://github.com/adobe-type-tools/agl-specification?tab=readme-ov-file#3-examples
-                # also "one" and "nine" are valid toki pona, and may rarely cause name collisions, e.g. "an1" -> "anone"
-                # ideal would be "tokiTok_hyphen_ponaTok", because the convention is like "f_f_i.liga"
-                # next best thing would be "toki_hyphen_ponaTok"
-                # or "tokiHYPHENponaTok", which requires allcapsing HYPHEN, PLUS, and AMPERSAND in a few places in the code
-                word = "".join(letters)
-
-                glyph_json = font_data.get("glyphs", {}).get("sheet", {})
-
-                # If a custom word has an UCSUR codepoint, assign it.
-                unused_ucsur_words = font_data.get("glyphs", {}).get(
-                    "other-ucsur-codepoints", {}
-                )
-                ucsur = False
-                for unused_ucsur_word in unused_ucsur_words:
-                    if word + "Tok" == unused_ucsur_word.get("name", ""):
-                        ucsur = True
-                        glyph_json[blank_cells[position]] = {
-                            "name": word + "Tok",
-                            "ligature": " ".join(letters),
-                            "codepoint": unused_ucsur_word.get("codepoint", -1),
-                        }
-                if not ucsur:
-                    # check if it's a redraw of an existing sheet glyph
-                    redraw = False
-                    for default_glyph in glyph_json:
-                        if "name" in default_glyph:
-                            if default_glyph["name"] == word + "Tok":
-                                redraw = True
-                                # todo: remove redundant glyphs from the preview web page
-
-                    if not redraw:
-                        # finally, the common case of a custom word
-                        glyph_json[blank_cells[position]]["name"] = word + "Tok"
-                        glyph_json[blank_cells[position]]["ligature"] = " ".join(
-                            letters
-                        )
+    # Mathematical font doesn't need custom words handling like sitelen pona did
+    # All glyphs are predefined in default.toml
 
     with open(default_json, "w") as file:
         json.dump(font_data, file, indent=4)
@@ -147,6 +86,9 @@ def converters(
 
 def main():
     print(
+        "Mathematical Handwritten Font Creator - Convert your handwritten math symbols to a font!"
+    )
+    print(
         "If you get errors, try `handwrite --help`. "
         + "Also check the analysis PNGs in the debug directory."
     )
@@ -160,7 +102,7 @@ def main():
         default=None,
     )
     parser.add_argument(
-        "--filename", help='Font File name ("MyFont" by default)', default=None
+        "--filename", help='Font File name ("MathHandwriting" by default)', default="MathHandwriting"
     )
     parser.add_argument(
         "--family", help="Font Family name (filename by default)", default=None
@@ -182,18 +124,6 @@ def main():
         "--sheet-version", help="Sheet version (latest by default)", default=None
     )
     parser.add_argument(
-        "--other-words",
-        help="""List of other words in the custom cells. Use _ to ignore a cell.
-
-        IMPORTANT: Add a _ to the left of every custom row, where the empty space is.
-
-        Example: `--other-words \"\
-        _ kiki kokosila usawi \
-        _ api Keli melome Pingo penpo poni snoweli \
-        _ kan kulijo misa molusa oke pa panke polinpin tona wa wasoweli waken\"`)""",
-        default=None,
-    )
-    parser.add_argument(
         "--pixel",
         action="store_true",
         help="Pixel font (experimental, false by default)",
@@ -207,16 +137,6 @@ def main():
     )
 
     args = parser.parse_args()
-    # cli_args = { # the format still looks like this, but we're about to recreate it
-    #     "filename": args.filename,
-    #     "family": args.family,
-    #     "designer": args.designer,
-    #     "license": args.license,
-    #     "license_url": args.license_url,
-    #     "sheet_version": args.sheet_version,
-    #     "pixel": args.pixel,
-    #     "not_new": args.not_new,
-    # }
     cli_args = vars(parser.parse_args())
     converters(
         args.input_path,
@@ -224,5 +144,5 @@ def main():
         args.debug_directory,
         None,
         cli_args,
-        args.other_words,
+        None,  # other_words_string not needed for math font
     )
