@@ -41,7 +41,7 @@ def create_toml_html(debug_dir, out_dir, cli_args=None, other_words_string=None)
     else:
         s = os.sep
         # If the user has ilo Linku's "sona" repo on their local machine, put the .toml in there for easy updating.
-        # Two folders up from /wasokeli.github.io/sp-font-maker/:
+        # Two folders up from a typical MathHandwriting site directory:
         if os.path.isdir(f"{out_dir}..{s}..{s}sona{s}fonts{s}metadata"):
             sona_repo_path = f"{out_dir}..{s}..{s}sona{s}fonts{s}metadata"
         # Theoretically, some flatter folder:
@@ -136,7 +136,7 @@ features = [
   "ASCII transcription and codepoints",
   "UCSUR-compliant",
   "cartouches",
-  "SP Font Maker words v2.2",        # unless they didn't fill out all the words
+  "MathHandwriting words v2.2",        # unless they didn't fill out all the words
 
   # "incomplete",
   # "variable weight",
@@ -147,7 +147,7 @@ features = [
   {prefix_ucsur}"all ku suli and UCSUR words",   # kokosila, apeja, pake, powe
   # "community requested nimisin",
 
-  # Not implemented in SP Font Maker:
+  # Not implemented in MathHandwriting:
   # "long pi",
   # "randomized jaki",
   # "ZWJ sequences",
@@ -167,9 +167,9 @@ features = [
 
 [links]
 # Autofilled for Kelly's site. If you're not uploading to Kelly's site, these URLs are inaccurate; upload the font to a website like neocities.org or github.io
-# fontfile = "https://wasokeli.github.io/sp-font-maker/{filename.replace(" ", "%20")}"
-# webpage  = "https://wasokeli.github.io/sp-font-maker/{family.replace(" ", "-")}.html"
-# repo     = "https://github.com/wasokeli/wasokeli.github.io/tree/main/sp-font-maker"
+# fontfile = "https://mathhandwriting.example/{filename.replace(" ", "%20")}" 
+# webpage  = "https://mathhandwriting.example/{family.replace(" ", "-")}.html"
+# repo     = "https://github.com/mathhandwriting/site"
 """
         )
         ilo_linku_toml_file.close()
@@ -189,7 +189,7 @@ features = [
 
     print(
         f"🌐 If hosting, give this to {designer}: "
-        + f"https://wasokeli.github.io/sp-font-maker/{family.replace(' ', '-')}"
+        + f"https://mathhandwriting.example/{family.replace(' ', '-')}"
     )
     print(
         "🏠 Preview in browser: file://"

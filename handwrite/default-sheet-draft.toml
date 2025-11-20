@@ -173,4 +173,202 @@ spaces = [
   {codepoint = 0x000a, width = 500,  name = "linefeed"}
 ]
 
-other-ucsur-codepoints = []
+# The following glyph names are prerequisites for custom ligatures. for example, the ligature "m u s i" has "m", "u", "s", "i" as prerequisites.
+# This code currently runs in sheettopng.py, so `source-glyph` refers to the index of the glyph in `sorted_characters`.
+# `sorted_characters` is the input sheet verbatim, plus the generated glyph `cartoucheMiddleTok` at index 180.
+# If the implementation is moved to a later step, like svgtottf_ffpython.py, then it can hopefully reference a `target-name` instead of `source-glyph`.
+[glyphs.ascii-base]
+-=[ # implemented!!!
+  # punctuation
+  {codepoint = 0x5b, name = "bracketleft",  source-glyph = 120}, # cartoucheStartTok
+  {codepoint = 0x5f, name = "underscore",   source-glyph = 180}, # cartoucheMiddleTok
+  {codepoint = 0x5d, name = "bracketright", source-glyph = 121}, # cartoucheEndTok
+  {codepoint = 0x2e, name = "period",       source-glyph = 122}, # middotTok
+  {codepoint = 0x3a, name = "colon",        source-glyph = 123}, # colonTok
+
+  # already-a-word letters, for words like Anna
+  {codepoint = 0x61, name = "a", source-glyph = 0},   # aTok
+  {codepoint = 0x65, name = "e", source-glyph = 9},   # eTok
+  {codepoint = 0x6e, name = "n", source-glyph = 148}, # nTok
+  {codepoint = 0x6f, name = "o", source-glyph = 68},  # oTok
+  {codepoint = 0x41, name = "A", source-glyph = 0},   # aTok
+  {codepoint = 0x45, name = "E", source-glyph = 9},   # eTok
+  {codepoint = 0x4e, name = "N", source-glyph = 148}, # nTok
+  {codepoint = 0x4f, name = "O", source-glyph = 68},  # oTok
+
+  # capital letters, for words like Pingo
+  {codepoint = 0x49, name = "I", source-glyph = 124}, # i
+  {codepoint = 0x4a, name = "J", source-glyph = 125}, # j
+  {codepoint = 0x4b, name = "K", source-glyph = 126}, # k
+  {codepoint = 0x4c, name = "L", source-glyph = 127}, # l
+  {codepoint = 0x4d, name = "M", source-glyph = 128}, # m
+  {codepoint = 0x50, name = "P", source-glyph = 129}, # p
+  {codepoint = 0x53, name = "S", source-glyph = 130}, # s
+  {codepoint = 0x54, name = "T", source-glyph = 131}, # t
+  {codepoint = 0x55, name = "U", source-glyph = 132}, # u
+  {codepoint = 0x57, name = "W", source-glyph = 133}, # w
+
+  # weird substitutions, for words like yutu
+  {codepoint = 0x62, name = "b", source-glyph = 129}, # p
+  {codepoint = 0x42, name = "B", source-glyph = 129}, # p
+  {codepoint = 0x63, name = "c", source-glyph = 130}, # s
+  {codepoint = 0x43, name = "C", source-glyph = 130}, # s
+  {codepoint = 0x64, name = "d", source-glyph = 131}, # t
+  {codepoint = 0x44, name = "D", source-glyph = 131}, # t
+  {codepoint = 0x66, name = "f", source-glyph = 129}, # p
+  {codepoint = 0x46, name = "F", source-glyph = 129}, # p
+  {codepoint = 0x67, name = "g", source-glyph = 126}, # k
+  {codepoint = 0x47, name = "G", source-glyph = 126}, # k
+  {codepoint = 0x68, name = "h", source-glyph = 126}, # k
+  {codepoint = 0x48, name = "H", source-glyph = 126}, # k
+  {codepoint = 0x71, name = "q", source-glyph = 126}, # k
+  {codepoint = 0x51, name = "Q", source-glyph = 126}, # k
+  {codepoint = 0x72, name = "r", source-glyph = 133}, # w
+  {codepoint = 0x52, name = "R", source-glyph = 133}, # w
+  {codepoint = 0x76, name = "v", source-glyph = 133}, # w
+  {codepoint = 0x56, name = "V", source-glyph = 133}, # w
+  {codepoint = 0x78, name = "x", source-glyph = 130}, # s
+  {codepoint = 0x58, name = "X", source-glyph = 130}, # s
+  {codepoint = 0x79, name = "y", source-glyph = 125}, # j
+  {codepoint = 0x59, name = "Y", source-glyph = 125}, # j
+  {codepoint = 0x7a, name = "z", source-glyph = 130}, # s
+  {codepoint = 0x5a, name = "Z", source-glyph = 130}  # s
+
+  # todo: add blank punctuation found in svgtottf_ffpython.py
+  # codepoint, name, and width of blank glyph
+]
+
+[glyphs.spaces]
+-=[
+  # support default ASCII ligatures
+  {codepoint = 0x7c, width = 1000, name = "pipe"},   # |
+  {codepoint = 0x20, width =    0, name = "space"},  #  
+  {codepoint = 0x2d, width =    0, name = "hyphen"}, # -
+  {codepoint = 0x30, width =    0, name = "zero"},   # 0
+  {codepoint = 0x31, width =    0, name = "one"},    # 1
+  {codepoint = 0x32, width =    0, name = "two"},    # 2
+  {codepoint = 0x33, width =    0, name = "three"},  # 3
+  {codepoint = 0x34, width =    0, name = "four"},   # 4
+  {codepoint = 0x35, width =    0, name = "five"},   # 5
+  {codepoint = 0x36, width =    0, name = "six"},    # 6
+  {codepoint = 0x37, width =    0, name = "seven"},  # 7
+  {codepoint = 0x38, width =    0, name = "eight"},  # 8
+  {codepoint = 0x39, width =    0, name = "nine"},   # 9
+  # todo: replace these three, and `v`, with rotated lili. it would be cute i think
+  {codepoint = 0x5e, width = 1000, name = "north"},  # ^
+  {codepoint = 0x3c, width = 1000, name = "west"},   # <
+  {codepoint = 0x3e, width = 1000, name = "east"},   # >
+  # (we treat "v" as a regular letter, instead of naming it "south")
+
+  # fallback for unsupported legacy features
+  {codepoint = 0x2b, width =    0, name = "plus"},        # +
+  {codepoint = 0x26, width =    0, name = "ampersand"},   # &
+  {codepoint = 0x7b, width =    0, name = "opencurly"},   # {
+  {codepoint = 0x7d, width =    0, name = "closecurly"},  # }
+  {codepoint = 0x28, width =    0, name = "openparen"},   # (
+  {codepoint = 0x29, width =    0, name = "closeparen"},  # )
+  {codepoint = 0x2a, width = 1000, name = "asterisk"},    # *
+  {codepoint = 0x22, width = 1000, name = "doublequote"}, # "
+  {codepoint = 0x2c, width = 1000, name = "comma"},       # ,
+  {codepoint = 0x27, width = 1000, name = "singlequote"}, # '
+
+  # fallback for text intended as sitelen Lasina
+  {codepoint = 0x21, width = 1000, name = "exclamation"}, # !
+  {codepoint = 0x3f, width = 1000, name = "question"},    # ?
+  {codepoint = 0x3b, width = 1000, name = "semicolon"},   # ;
+
+  # UCSUR features
+  {codepoint = 0x3000,  width = 1000, name = "ideographicspace"},
+  {codepoint = 0x200b,  width =    0, name = "zerowidthspace"},
+  {codepoint = 0xf1995, width =    0, name = "stackJoinTok"},
+
+  # fallback for unsupported UCSUR features
+  {codepoint = 0xf1996, width =    0, name = "nestJoinTok"},
+  {codepoint = 0x200d,  width =    0, name = "zerowidthjoiner"},
+  {codepoint = 0xf1997, width =    0}, # legacy start of long glyph
+  {codepoint = 0xf1998, width =    0}, # legacy end of long glyph
+  {codepoint = 0xf1999, width =    0}, # legacy combining long glyph extension
+  {codepoint = 0xf199a, width =    0}, # legacy start of reverse long glyph
+  {codepoint = 0xf199b, width =    0}, # legacy end of reverse long glyph
+]
+
+# UCSUR codepoints for words not included in the default sheet, since people may write them in.
+# Todo: Repurpose this for general data for unimplemented words. Mostly directional non-pu critters like waken
+# other-words-metadata, writein-metadata
+[writein.metadata]
+-=[ # implemented!!
+  {codepoint = 0xf19a1, name = "apejaTok",    ligature = "a p e j a"},
+  {codepoint = 0xf1984, name = "kokosilaTok", ligature = "k o k o s i l a"},
+  {codepoint = 0xf19a0, name = "pakeTok",     ligature = "p a k e"},
+  {codepoint = 0xf19a3, name = "poweTok",     ligature = "p o w e"},
+  # {name = "apiTok",      rotate = true},
+  # {name = "kaTok",       rotate = true, direction = "up"},
+  # {name = "jonkeTok",    rotate = true},
+  # {name = "kisaTok",     rotate = true, direction = "up"},
+  # {name = "misaTok",     rotate = true},
+  # {name = "molusaTok",   rotate = true},
+  # {name = "poniTok",     rotate = true},
+  # {name = "silapaTok",   rotate = true, direction = "left"},
+  # {name = "snoweliTok",  rotate = true},
+  # {name = "sutopatikunaTok", rotate = true},
+  # {name = "tasunTok",    rotate = true},
+  # {name = "wakenTok",    rotate = true},
+  # {name = "wasoweliTok", rotate = true},
+]
+
+# writein-glyph-names
+[writein.special-characters] # implemented!!
+# Used for parsing `--other-words`.
+# Used for creating the ligature used to type the custom word, AND used for the name of the custom glyph. This logic should probably be separated.
+# Consider moving this to a separate file? It's inelegant here, but more robust.
+# Consider switching to the official Adobe names for these special characters:
+#   https://github.com/adobe-type-tools/agl-aglfn/
+#   https://en.wikipedia.org/wiki/Adobe_Glyph_List
+
+# default ASCII ligatures
+"|" = "pipe"        # bar
+"-" = "hyphen"      # (works combining, but not standalone)
+"0" = "zero"
+"1" = "one"
+"2" = "two"
+"3" = "three"
+"4" = "four"
+"5" = "five"
+"6" = "six"
+"7" = "seven"
+"8" = "eight"
+"9" = "nine"
+"^" = "north"       # asciicircum
+"<" = "west"        # less
+">" = "east"        # greater
+"[" = "bracketleft"
+"]" = "bracketright"
+"_" = "underscore"  # (works combining, but not standalone. not supported)
+
+# fallback for unsupported legacy features
+"+" = "plus"
+"&" = "ampersand"
+"{" = "opencurly"   # braceleft
+"}" = "closecurly"  # braceright
+"(" = "openparen"   # parenleft
+")" = "closeparen"  # parenright
+"*" = "asterisk"
+'"' = 'doublequote' # quotedbl
+"," = "comma"
+"'" = "singlequote" # quotesingle
+
+# fallback for text intended as sitelen Lasina
+"!" = "exclamation" # exclam
+"?" = "question"
+";" = "semicolon"
+
+# --------
+
+# what do we need to include in the TOML to make cartouche middles *entirely* data-driven?
+# such that you can implement long pi and long awen in here?
+# in long pi, Start is 1000 wide and End is 0 wide.
+
+# out of scope for now:
+# in long ala, you can parse *backwards*, so there's technically *three* glyphs. is that just for ala?
+
+# long la requires reverse chaining. when going left-to-right, you can't tell the difference between la's { and ala's {.

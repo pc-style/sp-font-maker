@@ -1,11 +1,11 @@
-SP Font Maker, based on the English-language [Handwrite](https://github.com/builtree/handwrite).
+MathHandwriting, based on the English-language [Handwrite](https://github.com/builtree/handwrite).
 
-[SP Font Maker homepage](https://wasokeli.github.io/sp-font-maker/), with tips and examples!
+MathHandwriting homepage coming soon, with tips and examples!
 
 # Usage instructions
 
 Fill out this image, and send it to someone who's managed to install the script. They'll give you your font file:
-![template with an empty box for all the sitelen pona](https://wasokeli.github.io/sp-font-maker/template.png)
+![template with an empty box for all the sitelen pona](template.png)
 
 # Installation instructions
 
@@ -23,9 +23,7 @@ Currently, the architecture looks like this:
   - most default glyphs
   - `cli.py` writes custom words to specific indices in `glyphs-fancy`, in a font-specific JSON copy of `default.toml`
   - `sheettopng` uses the grid cell number as an index into `default.toml`'s `glyphs-fancy`, to assign each grid cell a name, before saving each PNG
-  - `svgtottf:add_ligatures` goes through `glyphs-fancy`, and creates a ligature for each entry with a `ligature` field
-    - also adds them to `glyphs_with_ligatures`, for cartouching
-    - also hard-codes the list `cartoucheable_non_words`
+    - `svgtottf:add_ligatures` goes through `glyphs-fancy`, and creates ligatures from each entry with a `ligature` field
   - `svgtottf:add_glyphs` goes through `glyphs-fancy`, and adds each character to the font file, using the `codepoint` field if present
   - codepoints for UCSUR words not included on the template
   - mapping of ASCII special characters used in custom ligatures, to legal glyph names for those characters
@@ -58,5 +56,5 @@ I think a better architecture would look like this:
 - `default-font-settings.toml`:
   - glyph names necessary for custom ligatures (letters and numbers)
   - fallback glyphs for punctuation used in sitelen Lasina prose, such as `,;!?`
-  - fallback glyphs for ligatures used in unsupported SP features, such as `(){}*",+&`
+  - fallback glyphs for ligatures used in unsupported legacy features, such as `(){}*",+&`
 - optional further sheet .toml files, specified on the command line alongside extra sheet images!

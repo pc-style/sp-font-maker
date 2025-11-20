@@ -27,10 +27,10 @@ def set_properties(font, cli_args, version_major, version_minor, version_patch):
     """Set metadata of the font."""
     sfnt_names = {}
     lang = "English (US)"  # `sfnt_names` are stored under the language
-    fontname = cli_args.get("filename", "Untitled")
+    fontname = cli_args.get("filename", "MathHandwriting")
     family = cli_args.get("family", None) or fontname
     style = "Regular"
-    designer = cli_args.get("designer", "jan pi toki pona")
+    designer = cli_args.get("designer", "MathHandwriting Team")
     license = cli_args.get("license", "All rights reserved")
     licenseurl = cli_args.get("license_url", "")
 
@@ -41,7 +41,7 @@ def set_properties(font, cli_args, version_major, version_minor, version_patch):
 
     # OS/2 fields - https://learn.microsoft.com/en-us/typography/opentype/spec/os2
     #             - https://fontforge.org/docs/scripting/python/fontforge.html#fontforge.font.os2_codepages
-    font.os2_vendor = "SPFM"
+    font.os2_vendor = "MATH"
 
     font.os2_typoascent_add = False  # "Is Offset" checkbox in FontForge
     font.os2_typodescent_add = False
@@ -95,9 +95,9 @@ def set_properties(font, cli_args, version_major, version_minor, version_patch):
 
     # Numbered fields - https://learn.microsoft.com/en-us/typography/opentype/spec/name
     # 8: Manufacturer
-    sfnt_names[8] = "SP Font Maker - https://wasokeli.github.io/sp-font-maker"
+    sfnt_names[8] = "MathHandwriting"
     # 11: Vendor URL
-    sfnt_names[11] = "https://wasokeli.github.io/sp-font-maker"
+    sfnt_names[11] = ""
 
     for k, v in sfnt_names.items():
         font.appendSFNTName(str(lang), k, v)
