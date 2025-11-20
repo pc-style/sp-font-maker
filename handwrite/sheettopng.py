@@ -401,91 +401,44 @@ def detect_characters(
 
     if other_words_string:
         other_words = other_words_string.split()
-        # fmt:off
-        blank_cells = [ # default.toml indices of the blank cells on the page
-                                                         136, 137, 138, 139, # 4 cells
-                                     152, 153, 154, 155, 156, 157, 158, 159, # 8 cells
-            167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179  # 13 cells
+        with open(default_json) as f:
+            glyph_json = json.load(f).get("glyphs", {}).get("sheet", {})
+
+        blank_cells = [
+            index for index, glyph in enumerate(glyph_json) if not glyph
         ]
-        # fmt:on
 
         for position, word in enumerate(other_words):
-            with open(default_json) as f:
-                glyph_json = json.load(f).get("glyphs", {}).get("sheet", {})
+            if position >= len(blank_cells):
+                break
             for default_glyph_index, default_glyph in enumerate(glyph_json):
-                if "name" in default_glyph:
-                    if default_glyph["name"] == word + "Tok":
-                        sorted_characters[default_glyph_index] = sorted_characters[
-                            blank_cells[position]
-                        ]
-                        # todo: remove redundant glyphs from the preview web page
+                name = default_glyph.get("name")
+                if name and name in (word, word + "Tok"):
+                    sorted_characters[default_glyph_index] = sorted_characters[
+                        blank_cells[position]
+                    ]
+                    # todo: remove redundant glyphs from the preview web page
+                    break
 
-    # here we start messing with glyphs based on their hardcoded indices.
-    # this logic should be reworked to read from default_json instead.
-    # for glyph in default_json:
-    #     if glyph["scan-shift"]:
-    #         do the things
-
-    # cartouches
-    open_cartouche = sorted_characters[120]
-    close_cartouche = sorted_characters[121]
-    glyph_left, glyph_top, glyph_w, glyph_h = (
-        open_cartouche[1],
-        open_cartouche[2],
-        open_cartouche[3],
-        open_cartouche[4],
+    generated_glyphs = default_json_data.get("glyphs", {}).get(
+        "generated-glyphs", []
     )
-    cartouche_middle_glyph_left = glyph_left + glyph_w - 1
 
-    # shift the open and close cartouche scan area inward, to match how the gray boxes are shifted
-    # glyph_left = open_cartouche[1] + glyph_w/16
-    # print("horizontal padding", grid_scan_hor_padding * glyph_w/grid_scan_w)
-    if pixel:
-        right_scan_padding = math.floor(grid_scan_hor_padding * glyph_w / grid_scan_w)
-        left_scan_padding = math.ceil(grid_scan_hor_padding * glyph_w / grid_scan_w)
-    else:
-        right_scan_padding = grid_scan_hor_padding * glyph_w / grid_scan_w
-        left_scan_padding = grid_scan_hor_padding * glyph_w / grid_scan_w
-
-    glyph_left = open_cartouche[1] + grid_scan_hor_padding * glyph_w / grid_scan_w
-    roi = image[
-        int(glyph_top) : int(glyph_top + glyph_h),
-        int(glyph_left) : int(glyph_left + glyph_w),
-    ]
-    sorted_characters[120][0] = roi
-    sorted_characters[120][1] = glyph_left
-
-    glyph_left = close_cartouche[1] - grid_scan_hor_padding * glyph_w / grid_scan_w
-    roi = image[
-        int(glyph_top) : int(glyph_top + glyph_h),
-        int(glyph_left) : int(glyph_left + glyph_w),
-    ]
-    sorted_characters[121][0] = roi
-    sorted_characters[121][1] = glyph_left
-
-    # █▀▀▀  █   █  ▀▀█▀▀  █▀▀▀▄    █
-    # █▄▄    ▀▄▀     █    █   █   █ █
-    # █      ▄▀▄     █    █▀█▀   █▄▄▄█
-    # █▄▄▄  █   █    █    █  ▀▄  █   █
-
-    # ▄▀▀▀▄  █    █   █  █▀▀▀▄  █   █  ▄▀▀▀▄
-    # █      █     █ █   █   █  █▄▄▄█  ▀▄▄▄
-    # █  ▀█  █      █    █▀▀▀   █   █      █
-    # ▀▄▄▄▀  █▄▄▄   █    █      █   █  ▀▄▄▄▀
-    # These are appended to the glyph list, and they need to be kept
-    # in sync with default.json, starting from line 216: "cartoucheMiddleTok"
-
-    # for the middle portion of the cartouche, grab the rightmost 1px column
-    # of the open cartouche. it'll be automatically stretched to the width
-    # of a glyph when it's converted to BMP, then SVG.
-    roi = image[
-        int(glyph_top) : int(glyph_top + glyph_h),
-        int(cartouche_middle_glyph_left) : int(cartouche_middle_glyph_left + 1),
-    ]
-    #                                                                    # bug? vv
-    sorted_characters.append(
-        [roi, cartouche_middle_glyph_left, glyph_top, glyph_w, glyph_h]
-    )
+    for generated in generated_glyphs:
+        source_index = generated.get("source-glyph")
+        if source_index is None:
+            continue
+        try:
+            source = sorted_characters[int(source_index)]
+        except (ValueError, IndexError):
+            continue
+        roi = image[
+            int(source[2]) : int(source[2] + source[4]),
+            int(source[1]) : int(source[1] + source[3]),
+        ]
+        sorted_characters.append(
+            [roi, source[1], source[2], source[3], source[4]]
+        )
 
     # add base glyphs for ASCII ligatures: [_].:, a-z, A-Z
     ligature_base_glyphs = default_json_data.get("glyphs", {}).get(
